@@ -1,0 +1,16 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Overclock3D", "Overclock3D\Overclock3D.csproj", "{CE354623-4185-4BF3-9C15-62A6DCDD190D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CE354623-4185-4BF3-9C15-62A6DCDD190D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CE354623-4185-4BF3-9C15-62A6DCDD190D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CE354623-4185-4BF3-9C15-62A6DCDD190D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CE354623-4185-4BF3-9C15-62A6DCDD190D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
