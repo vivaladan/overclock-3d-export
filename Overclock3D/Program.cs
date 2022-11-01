@@ -1,5 +1,6 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
+using System.Diagnostics;
 using System.Net;
 using System.Text;
 using System.Text.Encodings.Web;
@@ -8,6 +9,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Overclock3D.Database;
+
+var sw = Stopwatch.StartNew();
 
 DotNetEnv.Env.TraversePath().Load();
 
@@ -27,8 +30,8 @@ var serviceProvider = serviceCollection.BuildServiceProvider();
 
 var overclockContext = serviceProvider.GetRequiredService<OverclockContext>();
 
-const string outputPath = @"C:\overclock\";
-if (Directory.Exists(outputPath)) Directory.Delete(outputPath, true);
+var exportPath = DotNetEnv.Env.GetString("OVERCLOCK_EXPORT_PATH");
+if (Directory.Exists(exportPath)) Directory.Delete(exportPath, true);
 
 var contents = overclockContext.Tblcontents
     .Include(c => c.TableContentData);
@@ -42,7 +45,7 @@ foreach (var content in contents)
     if (string.IsNullOrWhiteSpace(content.Name)) return;
     if (string.IsNullOrWhiteSpace(content.Title)) return;
 
-    var contentPath = Path.Combine(outputPath, content.MainCat, content.SubCat, content.Name);
+    var contentPath = Path.Combine(exportPath, content.MainCat, content.SubCat, content.Name);
     if (!Directory.Exists(contentPath)) Directory.CreateDirectory(contentPath);
 
     var contentFile = contentPath + @"\index.html";
@@ -114,7 +117,7 @@ foreach (var content in contents)
 
 foreach (var (mainCat, pages) in map)
 {
-    var catIndexPath = Path.Combine(outputPath, mainCat) + @"\index.html";
+    var catIndexPath = Path.Combine(exportPath, mainCat) + @"\index.html";
     using StreamWriter file = new(catIndexPath);
 
     file.WriteLine("<html>");
@@ -130,4 +133,4 @@ foreach (var (mainCat, pages) in map)
     file.WriteLine("</html>");
 }
 
-Console.WriteLine("Done.");
+Console.WriteLine($"Finished in {sw.Elapsed:g}");
