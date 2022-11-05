@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using System.Net;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Text.Encodings.Web;
 using HtmlAgilityPack;
@@ -36,7 +37,7 @@ if (Directory.Exists(exportPath)) Directory.Delete(exportPath, true);
 var contents = overclockContext.Tblcontents
     .Include(c => c.TableContentData);
 
-Dictionary<string, List<(string RelativeUrl, string Title)>> map = new();
+Dictionary<string, List<DocInfo>> map = new();
 
 foreach (var content in contents)
 {
@@ -45,36 +46,43 @@ foreach (var content in contents)
     if (string.IsNullOrWhiteSpace(content.Name)) return;
     if (string.IsNullOrWhiteSpace(content.Title)) return;
 
-    var contentPath = Path.Combine(exportPath, content.MainCat, content.SubCat, content.Name);
-    if (!Directory.Exists(contentPath)) Directory.CreateDirectory(contentPath);
+    var docDirectory = Path.Combine(exportPath, content.MainCat, content.SubCat, content.Name);
+    var docPath = Path.Combine(docDirectory, "index.html");
+    
+    if (!Directory.Exists(docDirectory))
+    {
+        Directory.CreateDirectory(docDirectory);
+    }
 
-    var contentFile = contentPath + @"\index.html";
+    if (!map.ContainsKey(content.MainCat))
+    {
+        map.Add(content.MainCat, new List<DocInfo>());
+    }
+    
+    map.GetValueOrDefault(content.MainCat)!.Add(new DocInfo(content.Title, docPath));
 
-    if (!map.ContainsKey(content.MainCat)) map.Add(content.MainCat, new List<(string RelativeUrl, string Title)>());
-    map.GetValueOrDefault(content.MainCat)!.Add(('/' + string.Join('/', content.MainCat, content.SubCat, content.Name, "index.html"), content.Title));
-
-    using StreamWriter file = new(contentFile);
+    using StreamWriter file = new(docPath);
 
     file.WriteLine("<html>");
     file.WriteLine("<head>");
-    file.WriteLine($"<!--ex_title:{content.Title}-->");
-    file.WriteLine($"<!--ex_text:{content.Text}-->");
-    file.WriteLine($"<!--ex_date:{content.Date:s}-->");
-    file.WriteLine($"<!--ex_author:{content.Postername}-->");
-    file.WriteLine($"<!--ex_price:{content.Price}-->");
-    file.WriteLine($"<!--ex_source:{content.Source}-->");
-    file.WriteLine($"<!--ex_sourceurl:{content.Sourceurl}-->");
+    // file.WriteLine($"<!--ex_title:{content.Title}-->");
+    // file.WriteLine($"<!--ex_text:{content.Text}-->");
+    // file.WriteLine($"<!--ex_date:{content.Date:s}-->");
+    // file.WriteLine($"<!--ex_author:{content.Postername}-->");
+    // file.WriteLine($"<!--ex_price:{content.Price}-->");
+    // file.WriteLine($"<!--ex_source:{content.Source}-->");
+    // file.WriteLine($"<!--ex_sourceurl:{content.Sourceurl}-->");
     file.WriteLine("</head>");
     file.WriteLine("<body>");
-    file.WriteLine($"<span id=\"ex_title\" style=\"display: none;\">{content.Title}</span>");
-    file.WriteLine($"<span id=\"ex_text\" style=\"display: none;\">{content.Text}</span>");
-    file.WriteLine($"<span id=\"ex_date\" style=\"display: none;\">{content.Date:s}</span>");
-    file.WriteLine($"<span id=\"ex_author\" style=\"display: none;\">{content.Postername}</span>");
-    file.WriteLine($"<span id=\"ex_price\" style=\"display: none;\">{content.Price}</span>");
-    file.WriteLine($"<span id=\"ex_source\" style=\"display: none;\">{content.Source}</span>");
-    file.WriteLine($"<span id=\"ex_sourceurl\" style=\"display: none;\">{content.Sourceurl}</span>");
-    var allCategories = string.Join(',', content.MainCat, content.MidCat, content.SubCat);
-    file.WriteLine($"<span id=\"ex_cat\" style=\"display: none;\">{allCategories}</span>");
+    file.WriteLine($"<span id=\"ex_title\">{content.Title}</span></br>");
+    file.WriteLine($"<span id=\"ex_text\">{content.Text}</span></br>");
+    file.WriteLine($"<span id=\"ex_date\">{content.Date:s}</span></br>");
+    file.WriteLine($"<span id=\"ex_author\">{content.Postername}</span></br>");
+    file.WriteLine($"<span id=\"ex_price\">{content.Price}</span></br>");
+    file.WriteLine($"<span id=\"ex_source\">{content.Source}</span></br>");
+    file.WriteLine($"<span id=\"ex_sourceurl\">{content.Sourceurl}</span></br>");
+    file.WriteLine($"<span id=\"ex_mid_cat\">{content.MidCat}</span></br>");
+    file.WriteLine($"<span id=\"ex_sub_cat\">{content.SubCat}</span></br>");
     file.WriteLine($"<h1>{content.Title}</h1>");
     file.WriteLine($"<h2>{content.Text}</h2>");
     file.WriteLine("<article>");
@@ -117,15 +125,19 @@ foreach (var content in contents)
 
 foreach (var (mainCat, pages) in map)
 {
-    var catIndexPath = Path.Combine(exportPath, mainCat) + @"\index.html";
-    using StreamWriter file = new(catIndexPath);
+    using StreamWriter file = new(Path.Combine(exportPath, mainCat, "index.html"));
 
     file.WriteLine("<html>");
     file.WriteLine("<body>");
     file.WriteLine("<ul>");
-    foreach (var (relativeUrl, title) in pages)
+    
+    foreach (var (title, localPath) in pages)
     {
-        file.WriteLine($"<li><a href=\"{relativeUrl}\">{title}</a></li>");
+        var relativePath = localPath
+            .Replace(exportPath, string.Empty)
+            .Replace('\\', '/');
+        
+        file.WriteLine($"<li><a href=\"{relativePath}\">{title}</a></li>");
     }
 
     file.WriteLine("</ul>");
@@ -134,3 +146,5 @@ foreach (var (mainCat, pages) in map)
 }
 
 Console.WriteLine($"Finished in {sw.Elapsed:g}");
+
+public record DocInfo(string Title, string LocalPath);
